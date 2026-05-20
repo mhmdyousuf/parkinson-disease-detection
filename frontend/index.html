@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroTrack — Parkinson's Tremor Screening</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- QR Code generator library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+    <!-- 🚪 Patient Entry Portal -->
+    <div id="saas-portal" class="saas-overlay">
+        <div class="saas-container">
+            <div class="saas-hero">
+                <h1><i class="fa-solid fa-brain"></i> NeuroTrack <span class="badge High" style="font-size:0.5em; vertical-align: middle;">AI Portal</span></h1>
+                <p style="margin-top: 12px; opacity: 0.8; font-size: 1.05rem; line-height: 1.6;">Enterprise-grade Parkinson's screening &amp; monitoring platform.</p>
+                <ul style="margin-top: 24px; list-style: none; display: flex; flex-direction: column; gap: 12px; color: rgba(255,255,255,0.7); font-size: 0.95rem;">
+                    <li><i class="fa-solid fa-check-circle" style="color: #34d399; margin-right: 8px;"></i> 30-second tremor screening</li>
+                    <li><i class="fa-solid fa-check-circle" style="color: #34d399; margin-right: 8px;"></i> Phone sensor-based analysis</li>
+                    <li><i class="fa-solid fa-check-circle" style="color: #34d399; margin-right: 8px;"></i> Instant PDF report download</li>
+                </ul>
+            </div>
+
+            <div class="saas-login-box" id="auth-box">
+                <div class="mobile-brand">
+                    <h1><i class="fa-solid fa-brain"></i> Patient Entry</h1>
+                </div>
+
+                <h2 id="auth-title">Welcome</h2>
+                <p id="auth-subtitle" style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Please enter your medical details to begin.</p>
+
+                <div id="signup-fields">
+                    <div class="input-group">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="auth-name" placeholder="Full Name" autocomplete="name">
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-calendar-alt"></i>
+                        <input type="number" id="auth-age" placeholder="Age" min="1" max="120">
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-droplet"></i>
+                        <select id="auth-blood" class="input-field" style="margin:0; border:none; background:transparent; width:100%;">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="auth-phone" placeholder="Mobile Number" autocomplete="tel">
+                    </div>
+                </div>
+
+                <div id="auth-main-actions" style="margin-top: 20px;">
+                    <button class="btn primary-btn saas-btn" id="auth-submit-btn" onclick="handleAuth()">Start Session <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard">
+        <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <aside class="sidebar" id="main-sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-brain"></i>
+                <span>NeuroTrack</span>
+                <i class="fa-solid fa-xmark close-btn" onclick="toggleSidebar()"></i>
+            </div>
+            <!-- Patient info pill in sidebar -->
+            <div id="sidebar-patient-info" style="padding: 12px 18px; background: rgba(59,130,246,0.15); margin: 10px 12px; border-radius: 10px; font-size: 0.85rem; display: none;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-circle-user" style="font-size:1.4rem; color: #60a5fa;"></i>
+                    <div>
+                        <div id="sidebar-name" style="font-weight:700; color:white;"></div>
+                        <div id="sidebar-details" style="color: rgba(255,255,255,0.5); font-size:0.75rem;"></div>
+                    </div>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li id="nav-test" class="active" onclick="switchTab('test-tab')"><i class="fa-solid fa-wave-square"></i> Tremor Test</li>
+                <li id="nav-history" onclick="switchTab('history-tab')"><i class="fa-solid fa-chart-line"></i> Analysis History</li>
+
+                <li style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; color: #ff6b6b;" onclick="logoutPortal()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Clear &amp; Exit
+                </li>
+            </ul>
+        </aside>
+
+        <main class="content">
+            <!-- 📡 Tremor Test Tab -->
+            <section id="test-tab" class="tab-pane active">
+                <header>
+                    <h1>Resting Tremor Screening</h1>
+                    <p>Scan the QR code with your phone to begin the 30-second sensor test.</p>
+                </header>
+
+                <!-- MOBILE: sensor test UI -->
+                <div id="sensor-active-content" class="hidden">
+                    <div class="test-container">
+                        <div class="status-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div id="sensor-dot" style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444;"></div>
+                                    <span id="sensor-status-label" style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">Sensors Inactive</span>
+                                </div>
+                                <button id="permission-btn" class="btn secondary-btn hidden" style="padding: 5px 15px; font-size: 0.8rem;" onclick="requestIOSPermission()">Enable Sensors (iOS)</button>
+                            </div>
+
+                            <div class="timer-display" id="time-display-box" style="font-size: 4rem; font-weight: 800; color: var(--accent-color); text-align: center; margin: 10px 0;">
+                                <span id="time-text">30</span><span style="font-size: 1.5rem; color: var(--text-secondary);">s</span>
+                            </div>
+
+                            <div id="live-sensor-data" style="margin-bottom: 20px; font-family: monospace; font-size: 14px; text-align: center;">
+                                X: <span id="sens-x">0.00</span> | Y: <span id="sens-y">0.00</span> | Z: <span id="sens-z">0.00</span>
+                            </div>
+
+                            <h2 id="test-status" style="text-align: center;">Ready to Start</h2>
+                            <p id="test-instructions" style="text-align: center; color: #64748b; margin-bottom: 15px;">Place phone flat on your palm and press Start.</p>
+
+                            <button id="start-btn" class="btn primary-btn" style="margin-bottom: 10px; width: 100%;"><i class="fa-solid fa-play"></i> Start Test</button>
+                        </div>
+
+                        <!-- Results Card (Direct Phone flow — no QR session) -->
+                        <div id="test-results" class="results-card hidden" style="margin-top: 20px; width: 100%;">
+                            <h2 style="color: var(--accent-color);"><i class="fa-solid fa-square-poll-vertical"></i> Screening Result</h2>
+                            <div class="result-details" style="margin-top:20px; width: 100%;">
+                                <div class="stat"><span>Patient:</span> <b id="res-patient-name">--</b></div>
+                                <div class="stat"><span>Age:</span> <b id="res-patient-age">--</b></div>
+                                <div class="stat"><span>Blood Group:</span> <b id="res-patient-blood">--</b></div>
+                                <div class="stat"><span>Phone:</span> <b id="res-patient-phone">--</b></div>
+                                <div class="stat"><span>Prediction:</span> <b id="res-prediction">--</b></div>
+                                <div class="stat"><span>Frequency:</span> <b id="res-frequency">-- Hz</b></div>
+                                <div class="stat"><span>Amplitude:</span> <b id="res-amplitude">--</b></div>
+                                <div class="stat"><span>Severity:</span> <span id="res-severity" class="badge">--</span></div>
+                                <div class="stat"><span>Date &amp; Time:</span> <b id="res-datetime">--</b></div>
+                            </div>
+                            <!-- Medical Instruction Box -->
+                            <div id="res-instruction-box" class="instruction-box" style="margin-top:16px;padding:16px 18px;border-radius:12px;border:1px solid #cbd5e1;background:#f0f9ff;font-size:0.92rem;line-height:1.6;color:#1e40af;display:none;">
+                                <div style="font-weight:700;margin-bottom:6px;"><i class="fa-solid fa-stethoscope"></i> Medical Guidance</div>
+                                <span id="res-instruction">--</span>
+                            </div>
+                            <button class="btn primary-btn" onclick="downloadResultPDF()" style="margin-top: 20px; width: 100%; background: linear-gradient(135deg, #0ea5e9, #3b82f6);">
+                                <i class="fa-solid fa-download"></i> Download Report (PDF)
+                            </button>
+                        </div>
+
+                        <!-- QR Session Done Card (shown when phone was opened via QR from laptop) -->
+                        <div id="qr-session-done" class="results-card hidden" style="margin-top: 20px; width: 100%; text-align: center;">
+                            <i class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: #10b981; margin-bottom: 16px;"></i>
+                            <h2 style="color: #10b981; margin-bottom: 10px;">Test Complete! ✅</h2>
+                            <p style="color: #64748b; font-size: 1rem; margin-bottom: 20px;">
+                                Your tremor data has been sent to the laptop.<br>
+                                <strong>Please check the laptop screen for your full results and PDF report.</strong>
+                            </p>
+                            <div style="background: rgba(16,185,129,0.1); border: 1px solid #6ee7b7; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                                <i class="fa-solid fa-laptop" style="font-size: 1.8rem; color: #10b981;"></i>
+                                <p style="margin: 8px 0 0; color: #065f46; font-weight: 600;">Results are on the laptop now.</p>
+                            </div>
+                            <p style="color: #94a3b8; font-size: 0.85rem;">You may close this page.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESKTOP: Laptop Direct Test UI -->
+                <!-- DESKTOP: Phone Sensor Test UI -->
+                <div id="no-sensor-warning" class="hidden">
+                    <div class="test-container">
+                        <div class="status-card" style="text-align:center;">
+                            <i class="fa-solid fa-mobile-screen-button" style="font-size:3rem; color:#6366f1; margin-bottom:18px;"></i>
+                            <h2 style="margin-bottom:10px;">Mobile Sensor Test</h2>
+                            <p style="color:#64748b; margin-bottom:25px; font-size:1rem;">
+                                This test requires the high-precision sensors found in your smartphone.<br>
+                                Use the QR code below to connect your phone and start the analysis.
+                            </p>
+
+                            <div id="qr-generation-area">
+                                <div id="tunnel-warning" class="hidden" style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:15px;font-size:0.85rem;color:#92400e;text-align:left;">
+                                    <strong>⚠️ Tunnel not detected!</strong> Run <code>START_NEUROTRACK.bat</code> first.
+                                </div>
+                                <button class="btn primary-btn" id="gen-qr-btn" onclick="generateQRSession()" style="width:100%; padding: 15px;">
+                                    <i class="fa-solid fa-qrcode"></i> Generate QR Code for Phone
+                                </button>
+                            </div>
+
+                            <div id="qr-display-area" class="hidden" style="margin-top:10px;text-align:center;">
+                                <p style="color:#64748b;font-size:0.95rem;margin-bottom:12px;">📱 Scan with your phone camera:</p>
+                                <div id="qrcode-container" style="display:inline-block;padding:15px;background:white;border:2px solid #e2e8f0;border-radius:12px; margin-bottom: 15px;"></div>
+                                
+                                <div id="desktop-poll-status" style="margin-top:10px;padding:15px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
+                                    <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
+                                        <div class="pulse-dot"></div>
+                                        <span style="color:#16a34a;font-weight:600;font-size:0.95rem;" id="poll-status-text">Waiting for phone test...</span>
+                                    </div>
+                                </div>
+
+                                <button onclick="resetQR()" class="btn secondary-btn" style="margin-top:20px; width: 100%;">
+                                    <i class="fa-solid fa-rotate-left"></i> Generate New QR Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Result Card (Recieves data from phone) -->
+                        <div id="desktop-result-display" class="results-card hidden" style="margin-top:20px;width:100%;">
+                            <h2 style="color:var(--accent-color);"><i class="fa-solid fa-square-poll-vertical"></i> Screening Result</h2>
+                            <div class="result-details" style="margin-top:20px;width:100%;">
+                                <div class="stat"><span>Patient:</span> <b id="desk-res-name">--</b></div>
+                                <div class="stat"><span>Age:</span> <b id="desk-res-age">--</b></div>
+                                <div class="stat"><span>Blood Group:</span> <b id="desk-res-blood">--</b></div>
+                                <div class="stat"><span>Phone:</span> <b id="desk-res-phone">--</b></div>
+                                <div class="stat"><span>Prediction:</span> <b id="desk-res-prediction">--</b></div>
+                                <div class="stat"><span>Frequency:</span> <b id="desk-res-frequency">-- Hz</b></div>
+                                <div class="stat"><span>Amplitude:</span> <b id="desk-res-amplitude">--</b></div>
+                                <div class="stat"><span>Severity:</span> <span id="desk-res-severity" class="badge">--</span></div>
+                                <div class="stat"><span>Date &amp; Time:</span> <b id="desk-res-datetime">--</b></div>
+                            </div>
+                            <!-- Medical Instruction Box (Desktop) -->
+                            <div id="desk-res-instruction-box" class="instruction-box" style="margin-top:16px;padding:16px 18px;border-radius:12px;border:1px solid #cbd5e1;background:#f0f9ff;font-size:0.92rem;line-height:1.6;color:#1e40af;display:none;">
+                                <div style="font-weight:700;margin-bottom:6px;"><i class="fa-solid fa-stethoscope"></i> Medical Guidance</div>
+                                <span id="desk-res-instruction">--</span>
+                            </div>
+                            <button class="btn primary-btn" onclick="downloadDesktopPDF()" style="margin-top:18px;width:100%;background:linear-gradient(135deg,#0ea5e9,#3b82f6);">
+                                <i class="fa-solid fa-download"></i> Download Report (PDF)
+                            </button>
+                            <button onclick="resetQR()" class="btn secondary-btn" style="margin-top:10px;width:100%;">
+                                <i class="fa-solid fa-rotate-left"></i> Run New Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 🗓️ Analysis History Tab -->
+            <section id="history-tab" class="tab-pane hidden">
+                <header>
+                    <h1>Analysis &amp; Trends</h1>
+                    <p>Review your daily and weekly tremor patterns.</p>
+                </header>
+                <div class="test-container" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="results-card" style="width: 100%; height: 400px; max-width: 100%;">
+                        <h2>Frequency Analysis</h2>
+                        <div style="height: 300px; width: 100%; position: relative;">
+                            <canvas id="historyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="status-card" style="width: 100%; max-width: 100%;">
+                        <h2>Recent History</h2>
+                        <div id="test-history-body" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px; width: 100%;">
+                            <p style="color: #64748b;">No test history found.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="app_v2.js?v=34"></script>
+</body>
+</html>
