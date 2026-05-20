@@ -1,0 +1,32 @@
+================================================
+  NEUROTRACK - PARKINSON TREMOR SCREENING
+================================================
+
+Hello! To run this project on your computer, follow these 3 simple steps:
+
+STEP 1: INSTALL PYTHON (If you don't have it)
+--------------------------------------------
+Make sure you have Python installed. You can download it from:
+https://www.python.org/downloads/
+(Check the box "Add Python to PATH" during installation)
+
+STEP 2: SETUP THE PROJECT
+-------------------------
+Double-click the file named:
+    setup.bat
+This will create a virtual environment and install all necessary 
+libraries. This might take 1-2 minutes.
+
+STEP 3: START THE PROJECT
+-------------------------
+Double-click the file named:
+    START_NEUROTRACK.bat
+This will start the backend server and the Cloudflare tunnel.
+
+------------------------------------------------
+HOW TO USE:
+1. Once it starts, it will show a "PUBLIC URL" in the black window.
+2. Open http://localhost:8000 in your browser.
+3. Fill in details and click "Start Session".
+4. Scan the QR code with your phone.
+================================================
